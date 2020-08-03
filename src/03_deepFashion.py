@@ -37,26 +37,15 @@ y_dic = {0:"Denim", 1:"Jackets_Vests", 2:"Pants", 3:"Shirts_Polos", 4:"Shorts",
 
 def PocFunc(f):
     f = np.float32(f)
+    #RGBに分解
     b = f[:,:,0]
     g = f[:,:,1]
     r = f[:,:,2]
-    
-    """
-    m = np.floor(np.array(f.shape)/2.0)
-    u = map(lambda x: x / 2.0, m)
-
-    # hanning window
-    hy = windowfunc(f.shape[0])
-    hx = windowfunc(f.shape[1])
-    hw = hy.reshape(hy.shape[0], 1) * hx
-    f = f * hw
-    g = g * hw
-    """
-
-    # compute 2d fft
+    #二次元離散フーリエ変換
     B = scipy.fft(b)
     G = scipy.fft(g)
     R = scipy.fft(r)
+    # 強度で正規化、逆フーリエ変換、実部を取り出す
     b = np.real(scipy.ifft(B/np.abs(B)))
     g = np.real(scipy.ifft(G/np.abs(G)))
     r = np.real(scipy.ifft(R/np.abs(R)))
@@ -69,7 +58,7 @@ def PocFunc(f):
 
 def PreProcess(pc=False):
     # ファイル検索
-    x_path_list = glob.glob('/Users/tesiyosi/dev/harada_intel/dataset/MEN/*/*/01_1_front.jpg')
+    x_path_list = glob.glob('/Users/tesiyosi/dev/harada_intel/dataset/MEN/*/*/??_1_front.jpg')
     x_train=[]
     y_train=[]
     x_test=[]
@@ -91,9 +80,7 @@ def PreProcess(pc=False):
     x_train = np.array(x_train)
     x_test = np.array(x_test)
     x_train = x_train.reshape(x_train.shape[0],256,256,3)
-    print(x_train.shape[0])
     x_test = x_test.reshape(x_test.shape[0],256,256,3)
-    print(x_test.shape[1])
     x_train = x_train.astype('float32')
     x_test = x_test.astype('float32')
     x_train /= 255
@@ -141,6 +128,7 @@ def Learning():
     model = BuildCNN()
     (x_train, y_train), (x_test, y_test) = PreProcess(pc=False)
     history = model.fit(x_train, y_train,epochs=10)
+    model.summary()
     score = model.evaluate(x_test, y_test)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
