@@ -51,9 +51,7 @@ def PreProcess():
 ################################
 ######### モデルの構築 #########
 ################################
-def BuildCNN(ipshape=(28, 28, 1), num_classes=3):
-    model = Sequential()
-
+def BuildCNN():
     model = Sequential()
     model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(28, 28, 1)))
     model.add(Conv2D(64, (3, 3), activation='relu'))
@@ -78,7 +76,8 @@ def Learning(model):
     (x_train, y_train), (x_test, y_test) = PreProcess()
 
     history = model.fit(x_train, y_train)
-    
+    print(x_train[0])
+    print(y_train[0])
     score = model.evaluate(x_test, y_test)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
