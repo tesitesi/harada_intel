@@ -21,6 +21,10 @@ import keras
 import random 
 from PIL import Image
 from pathlib import Path
+from sklearn.model_selection import train_test_split
+import scipy 
+import cv2 
+import matplotlib.pyplot as plt 
 
 # 空リスト作成
 x_train=[]
@@ -31,27 +35,59 @@ y_test=[]
 y_dic = {0:"Denim", 1:"Jackets_Vests", 2:"Pants", 3:"Shirts_Polos", 4:"Shorts", 
 5:"Suiting", 6:"Sweaters", 7:"Sweatshirts_Hoodies", 8:"Tees_Tanks"}
 
-def PreProcess():
+def PocFunc(f):
+    f = np.float32(f)
+    b = f[:,:,0]
+    g = f[:,:,1]
+    r = f[:,:,2]
+    
+    """
+    m = np.floor(np.array(f.shape)/2.0)
+    u = map(lambda x: x / 2.0, m)
+
+    # hanning window
+    hy = windowfunc(f.shape[0])
+    hx = windowfunc(f.shape[1])
+    hw = hy.reshape(hy.shape[0], 1) * hx
+    f = f * hw
+    g = g * hw
+    """
+
+    # compute 2d fft
+    B = scipy.fft(b)
+    G = scipy.fft(g)
+    R = scipy.fft(r)
+    b = np.real(scipy.ifft(B/np.abs(B)))
+    g = np.real(scipy.ifft(G/np.abs(G)))
+    r = np.real(scipy.ifft(R/np.abs(R)))
+    f_new = np.stack([b,g,r],axis=2)
+    return f_new
+    
+
+
+
+
+def PreProcess(pc=False):
     # ファイル検索
     x_path_list = glob.glob('/Users/tesiyosi/dev/harada_intel/dataset/MEN/*/*/01_1_front.jpg')
     x_train=[]
     y_train=[]
     x_test=[]
     y_test=[]
+    x = []
+    y = []
 
     for path in x_path_list:
         # 画像取得
         im = np.array(Image.open(path))
+        if pc == True:
+            im = PocFunc(im)
         # 辞書を検索して分類を番号化
         lab = [k for k, v in y_dic.items() if v == Path(path).parts[-3]][0]
-        #70%の確率で学習データへ
-        if random.random() < 0.7:
-            x_train.append(im)
-            y_train.append(lab)
-        # 30%の確率でテストデータへ
-        else:
-            x_test.append(im)
-            y_test.append(lab)
+        x.append(im)
+        y.append(lab)
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random_state=100, stratify=y)
     x_train = np.array(x_train)
     x_test = np.array(x_test)
     x_train = x_train.reshape(x_train.shape[0],256,256,3)
@@ -103,8 +139,8 @@ def BuildCNN():
 ################################
 def Learning():
     model = BuildCNN()
-    (x_train, y_train), (x_test, y_test) = PreProcess()
-    history = model.fit(x_train, y_train,epochs=20)
+    (x_train, y_train), (x_test, y_test) = PreProcess(pc=False)
+    history = model.fit(x_train, y_train,epochs=10)
     score = model.evaluate(x_test, y_test)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])

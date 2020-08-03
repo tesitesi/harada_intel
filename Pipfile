@@ -12,6 +12,7 @@ matplotlib = "*"
 jupyter = "*"
 tensorflow = "*"
 keras = "*"
+sklearn = "*"
 
 [requires]
 python_version = "3.8"
